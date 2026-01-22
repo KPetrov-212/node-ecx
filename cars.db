@@ -1,0 +1,22 @@
+CREATE TABLE cars (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    brand TEXT NOT NULL,
+    model TEXT NOT NULL,
+    year INTEGER,
+    color TEXT
+)
+
+CREATE TABLE administrators (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    salt TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+
+CREATE TABLE sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    login_time DATETIME DEFAULT CURRENT_TIMESTAMP
+)

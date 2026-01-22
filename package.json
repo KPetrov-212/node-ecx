@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/KPetrov-212/node-ecx#readme",
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "sqlite3": "^5.1.7"
   }
 }
