@@ -1,0 +1,119 @@
+# Express.js Project - Complete Setup Guide
+
+## Step 1: Create Your Project Repository
+
+1. Go to GitHub and create a new repository
+2. Name it (e.g., `express-api-project`)
+3. Select `.gitignore` template: **Node**
+4. Check "Initialize repository with README"
+5. Click "Create repository"
+6. Clone the repository to your local machine:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/REPO_NAME.git
+   cd REPO_NAME
+   ```
+
+## Step 2: Install Express
+
+1. Initialize npm (if not already done):
+   ```bash
+   npm init -y
+   ```
+
+2. Install Express:
+   ```bash
+   npm install express
+   ```
+
+## Step 3: Create Your Server File
+
+Create a file called `server.js` (see the server code artifact)
+
+## Step 4: Test Your Endpoints
+
+Start the server:
+```bash
+node server.js
+```
+
+Test the endpoints using your browser or a tool like Postman:
+
+- **GET all items**: `http://localhost:3000/api/cars`
+- **GET one item**: `http://localhost:3000/api/cars/1`
+- **POST new item**: `http://localhost:3000/api/cars` (with JSON body)
+- **DELETE item**: `http://localhost:3000/api/cars/1`
+
+### Testing with curl (in terminal):
+
+```bash
+# Get all cars
+curl http://localhost:3000/api/cars
+
+# Get car by ID
+curl http://localhost:3000/api/cars/1
+
+# Add new car
+curl -X POST http://localhost:3000/api/cars \
+  -H "Content-Type: application/json" \
+  -d '{"id":4,"brand":"BMW","model":"M3","year":2023,"color":"Black"}'
+
+# Delete a car
+curl -X DELETE http://localhost:3000/api/cars/2
+```
+
+## Step 5: Create Branch and Merge
+
+1. Create a new branch:
+   ```bash
+   git checkout -b feature/api-endpoints
+   ```
+
+2. Add your files:
+   ```bash
+   git add .
+   ```
+
+3. Commit your changes:
+   ```bash
+   git commit -m "Add Express API with CRUD endpoints"
+   ```
+
+4. Push the branch:
+   ```bash
+   git push origin feature/api-endpoints
+   ```
+
+5. Switch to main branch:
+   ```bash
+   git checkout main
+   ```
+
+6. Merge the feature branch:
+   ```bash
+   git merge feature/api-endpoints
+   ```
+
+7. Push to GitHub:
+   ```bash
+   git push origin main
+   ```
+
+## Project Structure
+
+Your project should look like this:
+```
+your-project/
+├── node_modules/
+├── .gitignore
+├── package.json
+├── package-lock.json
+├── server.js
+└── README.md
+```
+
+## Tips
+
+- Make sure Node.js is installed (`node --version`)
+- The server runs on port 3000 by default
+- You can change the data array to match your project idea (students, products, movies, etc.)
+- Add a README.md describing your API endpoints

@@ -1,0 +1,195 @@
+# Exercise 3 - Complete Setup Guide
+
+## ✅ What Was Implemented
+
+1. ✅ `.env` and `.env.example` files created
+2. ✅ `.env` added to `.gitignore`
+3. ✅ Session secret loaded from `.env`
+4. ✅ Administrators array with hashed passwords
+5. ✅ `isAuthenticated` middleware used in all write endpoints
+6. ✅ **BONUS:** Register endpoint added
+7. ✅ **BONUS:** Salt added to passwords (using `randomBytes`)
+
+---
+
+## 📁 Step-by-Step Setup
+
+### Step 1: Create the .env file
+Create a file named `.env` in your project root:
+```bash
+SESSION_SECRET=my-super-secret-key-12345
+```
+
+### Step 2: Create the .env.example file
+Create a file named `.env.example` in your project root:
+```bash
+SESSION_SECRET=your-session-secret-here
+```
+
+### Step 3: Update .gitignore
+Make sure `.env` is in your `.gitignore` file (see the artifact with updated .gitignore)
+
+### Step 4: Run the server with .env file
+```bash
+node --env-file=.env server.js
+```
+
+---
+
+## 🔐 How Password Security Works Now
+
+### 1. **Salt + Hash**
+Each password is salted and hashed:
+- **Salt**: Random string unique to each user
+- **Hash**: SHA-256 hash of (password + salt)
+- **Storage**: Only hash and salt are stored, never plain password
+
+Example:
+```javascript
+Password: "admin123"
+Salt: "salt123"
+Hash: sha256("admin123" + "salt123") = "a1b2c3d4..."
+```
+
+### 2. **Administrators Array**
+```javascript
+const administrators = [
+    { 
+        username: "admin", 
+        salt: "salt123",
+        passwordHash: "hashed_value_here"
+    }
+];
+```
+
+### 3. **Login Process**
+1. User sends username + password
+2. Server finds admin by username
+3. Server hashes provided password with stored salt
+4. Compares hashed result with stored hash
+5. If match → generate token, else → reject
+
+---
+
+## 🚀 Testing the New Features
+
+### Test Admin Users (Pre-configured)
+- Username: `admin` | Password: `admin123`
+- Username: `superadmin` | Password: `super123`
+
+### 1. Register a New Admin (Optional Feature)
+```bash
+curl -X POST http://localhost:3000/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"newadmin","password":"newpass123"}'
+```
+
+### 2. Login with Admin Credentials
+```bash
+curl -X POST http://localhost:3000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "token": "long_hashed_token_here",
+  "username": "admin"
+}
+```
+
+### 3. Add a Car (Protected Endpoint)
+```bash
+curl -X POST http://localhost:3000/api/cars \
+  -H "Content-Type: application/json" \
+  -H "Authorization: YOUR_TOKEN_HERE" \
+  -d '{"brand":"Porsche","model":"911","year":2024,"color":"Red"}'
+```
+
+### 4. Delete a Car (Protected Endpoint)
+```bash
+curl -X DELETE http://localhost:3000/api/cars/1 \
+  -H "Authorization: YOUR_TOKEN_HERE"
+```
+
+---
+
+## 📊 API Endpoints Summary
+
+| Endpoint | Method | Protected? | Description |
+|----------|--------|------------|-------------|
+| `/api/register` | POST | ❌ No | Register new admin (optional) |
+| `/api/login` | POST | ❌ No | Login with hashed password check |
+| `/api/logout` | POST | ⚠️ Token | Logout and invalidate token |
+| `/api/cars` | GET | ❌ No | Get all cars |
+| `/api/cars/:id` | GET | ❌ No | Get one car |
+| `/api/cars` | POST | ✅ Yes | Add new car (isAuthenticated) |
+| `/api/cars/:id` | DELETE | ✅ Yes | Delete car (isAuthenticated) |
+
+---
+
+## 🔍 Key Security Features
+
+### ✅ Implemented in Exercise 3:
+
+1. **Environment Variables**
+   - Sensitive data (SESSION_SECRET) in `.env`
+   - `.env` excluded from git
+   - `.env.example` as template
+
+2. **Password Hashing**
+   - Using `createHash` from `node:crypto`
+   - SHA-256 algorithm
+   - Passwords never stored in plain text
+
+3. **Salt per User**
+   - Each admin has unique salt
+   - Using `randomBytes` for registration
+   - Prevents rainbow table attacks
+
+4. **Middleware Protection**
+   - `isAuthenticated` middleware
+   - Applied to all write operations (POST, DELETE)
+   - Clean separation of concerns
+
+5. **Secure Token Generation**
+   - Tokens use SESSION_SECRET from .env
+   - Hashed with SHA-256
+   - Unique per session
+
+---
+
+## 📝 Git Workflow for Exercise 3
+
+```bash
+# Create feature branch
+git checkout -b feature/authentication-security
+
+# Add files (make sure .env is NOT added!)
+git add server.js .env.example .gitignore
+git status  # verify .env is NOT in the list
+
+# Commit changes
+git commit -m "Add environment variables, password hashing, and authentication middleware"
+
+# Push branch
+git push origin feature/authentication-security
+
+# Merge to main
+git checkout main
+git merge feature/authentication-security
+git push origin main
+```
+
+---
+
+## ⚠️ Important Notes
+
+- **Never commit .env** to git! Only commit `.env.example`
+- The `.env` file contains your secret key
+- Always run with: `node --env-file=.env server.js`
+- Pre-configured admins use simple salts for testing only
+- New registered admins get random salts automatically
+- In production, use bcrypt instead of SHA-256 for passwords

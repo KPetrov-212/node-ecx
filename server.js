@@ -1,5 +1,6 @@
-// Import Express
+// Import Express and crypto
 const express = require('express');
+const { createHash, randomBytes } = require('node:crypto');
 const app = express();
 const PORT = 3000;
 
@@ -13,16 +14,29 @@ let cars = [
     { id: 3, brand: "Ford", model: "Mustang", year: 2021, color: "Red" }
 ];
 
-// Simple user storage (in production, use a database and hashed passwords!)
-const users = [
-    { username: "admin", password: "admin123" },
-    { username: "user", password: "user123" }
+// Helper function to hash password with salt
+function hashPassword(password, salt) {
+    return createHash('sha256').update(password + salt).digest('hex');
+}
+
+// 3. Administrators array with hashed passwords and salts
+const administrators = [
+    { 
+        username: "admin", 
+        salt: "salt123",
+        passwordHash: hashPassword("admin123", "salt123")
+    },
+    { 
+        username: "superadmin", 
+        salt: "salt456",
+        passwordHash: hashPassword("super123", "salt456")
+    }
 ];
 
 // Store active sessions (logged in users)
 let activeSessions = [];
 
-// Authentication middleware
+// 4. Authentication middleware
 function isAuthenticated(req, res, next) {
     const token = req.headers.authorization;
     
@@ -53,7 +67,7 @@ app.get('/', (req, res) => {
     res.json({ message: "Welcome to the Cars API" });
 });
 
-// 2. LOGIN endpoint
+// 3. LOGIN endpoint - Check admin credentials with hashed passwords
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     
@@ -64,18 +78,31 @@ app.post('/api/login', (req, res) => {
         });
     }
     
-    // Check if user exists and password is correct
-    const user = users.find(u => u.username === username && u.password === password);
+    // Find admin by username
+    const admin = administrators.find(a => a.username === username);
     
-    if (!user) {
+    if (!admin) {
         return res.status(401).json({
             success: false,
             message: "Invalid username or password"
         });
     }
     
-    // Generate simple token (in production, use JWT or better solution)
-    const token = `token_${username}_${Date.now()}`;
+    // Hash the provided password with the admin's salt and compare
+    const hashedPassword = hashPassword(password, admin.salt);
+    
+    if (hashedPassword !== admin.passwordHash) {
+        return res.status(401).json({
+            success: false,
+            message: "Invalid username or password"
+        });
+    }
+    
+    // 2. Generate token using session secret from .env
+    const sessionSecret = process.env.SESSION_SECRET || 'fallback-secret';
+    const token = createHash('sha256')
+        .update(`${username}_${Date.now()}_${sessionSecret}`)
+        .digest('hex');
     
     // Store session
     activeSessions.push({
@@ -92,7 +119,7 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// 2. LOGOUT endpoint
+// LOGOUT endpoint
 app.post('/api/logout', (req, res) => {
     const token = req.headers.authorization;
     
@@ -118,6 +145,46 @@ app.post('/api/logout', (req, res) => {
     res.json({
         success: true,
         message: "Logout successful"
+    });
+});
+
+// Optional 1: REGISTER endpoint
+app.post('/api/register', (req, res) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({
+            success: false,
+            message: "Username and password are required"
+        });
+    }
+    
+    // Check if username already exists
+    const existingAdmin = administrators.find(a => a.username === username);
+    if (existingAdmin) {
+        return res.status(400).json({
+            success: false,
+            message: "Username already exists"
+        });
+    }
+    
+    // Generate random salt
+    const salt = randomBytes(16).toString('hex');
+    
+    // Hash password with salt
+    const passwordHash = hashPassword(password, salt);
+    
+    // Add new admin
+    administrators.push({
+        username: username,
+        salt: salt,
+        passwordHash: passwordHash
+    });
+    
+    res.status(201).json({
+        success: true,
+        message: "Registration successful. You can now login.",
+        username: username
     });
 });
 
@@ -148,7 +215,7 @@ app.get('/api/cars/:id', (req, res) => {
     });
 });
 
-// 1 & 3. POST - Add new car (PROTECTED - authentication required)
+// 4. POST - Add new car (PROTECTED with isAuthenticated middleware)
 app.post('/api/cars', isAuthenticated, (req, res) => {
     const newCar = {
         id: req.body.id || cars.length + 1,
@@ -176,7 +243,7 @@ app.post('/api/cars', isAuthenticated, (req, res) => {
     });
 });
 
-// 3. DELETE car by ID (PROTECTED - authentication required)
+// 4. DELETE car by ID (PROTECTED with isAuthenticated middleware)
 app.delete('/api/cars/:id', isAuthenticated, (req, res) => {
     const id = parseInt(req.params.id);
     const carIndex = cars.findIndex(c => c.id === id);
@@ -202,9 +269,10 @@ app.delete('/api/cars/:id', isAuthenticated, (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     console.log(`API endpoints available at http://localhost:${PORT}/api/cars`);
-    console.log(`\nTest users:`);
+    console.log(`\nTest admins:`);
     console.log(`  Username: admin, Password: admin123`);
-    console.log(`  Username: user, Password: user123`);
+    console.log(`  Username: superadmin, Password: super123`);
+    console.log(`\nSession Secret: ${process.env.SESSION_SECRET || 'using fallback'}`);
 });
 
 

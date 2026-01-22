@@ -1,0 +1,159 @@
+# Testing Authentication - Complete Guide
+
+## What Changed in Exercise 2
+
+✅ **POST method** for adding cars (already was POST, now with authentication)  
+✅ **Login endpoint** - `/api/login`  
+✅ **Logout endpoint** - `/api/logout`  
+✅ **Protected endpoints** - POST and DELETE now require authentication
+
+## Test Users Available
+
+- **Username:** `admin` | **Password:** `admin123`
+- **Username:** `user` | **Password:** `user123`
+
+---
+
+## Testing Flow with curl
+
+### Step 1: Try to add a car WITHOUT login (should fail)
+```bash
+curl -X POST http://localhost:3000/api/cars \
+  -H "Content-Type: application/json" \
+  -d '{"brand":"BMW","model":"M3","year":2023,"color":"Black"}'
+```
+**Expected:** Error - "Authentication required"
+
+---
+
+### Step 2: Login to get a token
+```bash
+curl -X POST http://localhost:3000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+```
+**Expected:** You'll get a response with a token like:
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "token": "token_admin_1234567890",
+  "username": "admin"
+}
+```
+**SAVE THIS TOKEN!** You'll need it for the next steps.
+
+---
+
+### Step 3: Add a car WITH authentication (should work)
+Replace `YOUR_TOKEN_HERE` with the token from Step 2:
+```bash
+curl -X POST http://localhost:3000/api/cars \
+  -H "Content-Type: application/json" \
+  -H "Authorization: YOUR_TOKEN_HERE" \
+  -d '{"brand":"BMW","model":"M3","year":2023,"color":"Black"}'
+```
+**Expected:** Car added successfully!
+
+---
+
+### Step 4: Delete a car WITH authentication (should work)
+```bash
+curl -X DELETE http://localhost:3000/api/cars/2 \
+  -H "Authorization: YOUR_TOKEN_HERE"
+```
+**Expected:** Car deleted successfully!
+
+---
+
+### Step 5: Get all cars (no authentication needed)
+```bash
+curl http://localhost:3000/api/cars
+```
+**Expected:** List of all cars (this endpoint is public)
+
+---
+
+### Step 6: Logout
+```bash
+curl -X POST http://localhost:3000/api/logout \
+  -H "Authorization: YOUR_TOKEN_HERE"
+```
+**Expected:** "Logout successful"
+
+---
+
+### Step 7: Try to add a car with the same token after logout (should fail)
+```bash
+curl -X POST http://localhost:3000/api/cars \
+  -H "Content-Type: application/json" \
+  -H "Authorization: YOUR_TOKEN_HERE" \
+  -d '{"brand":"Audi","model":"A4","year":2023,"color":"White"}'
+```
+**Expected:** Error - "Invalid or expired token"
+
+---
+
+## Testing with Postman
+
+### 1. Login
+- Method: `POST`
+- URL: `http://localhost:3000/api/login`
+- Body (JSON):
+  ```json
+  {
+    "username": "admin",
+    "password": "admin123"
+  }
+  ```
+- Copy the `token` from the response
+
+### 2. Add Car (Protected)
+- Method: `POST`
+- URL: `http://localhost:3000/api/cars`
+- Headers:
+  - `Content-Type`: `application/json`
+  - `Authorization`: `YOUR_TOKEN_HERE`
+- Body (JSON):
+  ```json
+  {
+    "brand": "Tesla",
+    "model": "Model 3",
+    "year": 2024,
+    "color": "White"
+  }
+  ```
+
+### 3. Delete Car (Protected)
+- Method: `DELETE`
+- URL: `http://localhost:3000/api/cars/1`
+- Headers:
+  - `Authorization`: `YOUR_TOKEN_HERE`
+
+### 4. Logout
+- Method: `POST`
+- URL: `http://localhost:3000/api/logout`
+- Headers:
+  - `Authorization`: `YOUR_TOKEN_HERE`
+
+---
+
+## Quick Summary
+
+| Endpoint | Method | Protected? | Description |
+|----------|--------|------------|-------------|
+| `/api/login` | POST | ❌ No | Login and get token |
+| `/api/logout` | POST | ⚠️ Needs token | Logout and invalidate token |
+| `/api/cars` | GET | ❌ No | Get all cars |
+| `/api/cars/:id` | GET | ❌ No | Get one car |
+| `/api/cars` | POST | ✅ Yes | Add new car (needs token) |
+| `/api/cars/:id` | DELETE | ✅ Yes | Delete car (needs token) |
+
+---
+
+## Important Notes
+
+- The token must be sent in the `Authorization` header
+- After logout, the token becomes invalid
+- GET endpoints are public (anyone can view cars)
+- POST and DELETE endpoints are protected (only logged in users)
