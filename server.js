@@ -6,94 +6,95 @@ const PORT = 3000;
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// Sample data array - Books example (you can change this to match your project)
-let books = [
-    { id: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", year: 1925 },
-    { id: 2, title: "To Kill a Mockingbird", author: "Harper Lee", year: 1960 },
-    { id: 3, title: "Pride and Prejudice", author: "Jane Austen", year: 1813 }
+// Sample data array - Cars
+let cars = [
+    { id: 1, brand: "Toyota", model: "Camry", year: 2022, color: "Silver" },
+    { id: 2, brand: "Honda", model: "Civic", year: 2023, color: "Blue" },
+    { id: 3, brand: "Ford", model: "Mustang", year: 2021, color: "Red" }
 ];
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.json({ message: "Welcome to the Books API" });
+    res.json({ message: "Welcome to the Cars API" });
 });
 
 // 4.1 GET all objects
-app.get('/api/books', (req, res) => {
+app.get('/api/cars', (req, res) => {
     res.json({
         success: true,
-        count: books.length,
-        data: books
+        count: cars.length,
+        data: cars
     });
 });
 
 // 4.2 GET object by ID
-app.get('/api/books/:id', (req, res) => {
+app.get('/api/cars/:id', (req, res) => {
     const id = parseInt(req.params.id);
-    const book = books.find(b => b.id === id);
+    const car = cars.find(c => c.id === id);
     
-    if (!book) {
+    if (!car) {
         return res.status(404).json({
             success: false,
-            message: `Book with ID ${id} not found`
+            message: `Car with ID ${id} not found`
         });
     }
     
     res.json({
         success: true,
-        data: book
+        data: car
     });
 });
 
 // 4.3 POST - Add new object
-app.post('/api/books', (req, res) => {
-    const newBook = {
-        id: req.body.id || books.length + 1,
-        title: req.body.title,
-        author: req.body.author,
-        year: req.body.year
+app.post('/api/cars', (req, res) => {
+    const newCar = {
+        id: req.body.id || cars.length + 1,
+        brand: req.body.brand,
+        model: req.body.model,
+        year: req.body.year,
+        color: req.body.color
     };
     
     // Validate required fields
-    if (!newBook.title || !newBook.author) {
+    if (!newCar.brand || !newCar.model) {
         return res.status(400).json({
             success: false,
-            message: "Title and author are required"
+            message: "Brand and model are required"
         });
     }
     
-    books.push(newBook);
+    cars.push(newCar);
     
     res.status(201).json({
         success: true,
-        message: "Book added successfully",
-        data: newBook
+        message: "Car added successfully",
+        data: newCar
     });
 });
 
 // 4.4 DELETE object by ID
-app.delete('/api/books/:id', (req, res) => {
+app.delete('/api/cars/:id', (req, res) => {
     const id = parseInt(req.params.id);
-    const bookIndex = books.findIndex(b => b.id === id);
+    const carIndex = cars.findIndex(c => c.id === id);
     
-    if (bookIndex === -1) {
+    if (carIndex === -1) {
         return res.status(404).json({
             success: false,
-            message: `Book with ID ${id} not found`
+            message: `Car with ID ${id} not found`
         });
     }
     
-    const deletedBook = books.splice(bookIndex, 1);
+    const deletedCar = cars.splice(carIndex, 1);
     
     res.json({
         success: true,
-        message: "Book deleted successfully",
-        data: deletedBook[0]
+        message: "Car deleted successfully",
+        data: deletedCar[0]
     });
 });
 
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-    console.log(`API endpoints available at http://localhost:${PORT}/api/books`);
+    console.log(`API endpoints available at http://localhost:${PORT}/api/cars`);
 });
